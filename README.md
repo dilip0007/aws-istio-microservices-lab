@@ -245,3 +245,41 @@ A VirtualService is the actual *brain* of Istio routing. It tells the Gateway *w
 >   - *"Send 90% of traffic to Frontend V1's Service, and 10% to Frontend V2's Service."* 
 >   - *"If the user is on an iPhone, route them to the Mobile Service."* 
 >   - Automatically handle retries, timeouts, and fault injection.
+
+---
+
+## 7. Installing Observability Dashboards (Kiali & Prometheus)
+
+In a production Helm installation, the heavy observability dashboards are not installed by default to save resources. However, you can install the official Istio addons to visualize your mesh.
+
+### Step 1: Install Prometheus (Metrics Collector)
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.22/samples/addons/prometheus.yaml
+```
+
+### Step 2: Install Kiali (Visual Traffic Map)
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.22/samples/addons/kiali.yaml
+```
+
+---
+
+## 8. Accessing the App & Dashboards (Local Port-Forwarding)
+
+Because you are running this lab on a local cluster (like `k3d` or `minikube`) instead of a full AWS EKS cluster with a cloud Load Balancer (ALB), you need to use Kubernetes Port-Forwarding to create secure tunnels from your Mac into the cluster.
+
+### Access the Live Application (Frontend)
+Run this command in a terminal and leave it running:
+```bash
+kubectl port-forward svc/istio-ingressgateway -n istio-system 8080:80
+```
+👉 **Open in browser:** [http://localhost:8080](http://localhost:8080)
+
+### Access the Kiali Traffic Map
+Run this command in a **separate** terminal window and leave it running:
+```bash
+kubectl port-forward svc/kiali -n istio-system 20001:20001
+```
+👉 **Open in browser:** [http://localhost:20001](http://localhost:20001)
+
+*(Note: Once inside Kiali, make sure to select the `default` namespace from the dropdown, change the graph type to "App graph" or "Service graph", and enable "Traffic Animation" in the Display menu!)*
