@@ -1,0 +1,50 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: kaniko
+                image: gcr.io/kaniko-project/executor:debug
+                command:
+                - sleep
+                args:
+                - 9999999
+                volumeMounts:
+                - name: docker-config
+                  mountPath: /kaniko/.docker/
+              - name: kubectl
+                image: bitnami/kubectl:latest
+                command:
+                - sleep
+                args:
+                - 9999999
+              volumes:
+              - name: docker-config
+                secret:
+                  secretName: docker-credentials
+                  items:
+                    - key: config.json
+                      path: config.json
+            '''
+        }
+    }
+    stages {
+        stage('Build Image') {
+            steps {
+                container('kaniko') {
+                    sh "/kaniko/executor --context \${WORKSPACE}/src/frontend --dockerfile \${WORKSPACE}/src/frontend/Dockerfile --destination dilipnigam007/frontend:v\${env.BUILD_NUMBER}"
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                container('kubectl') {
+                    sh "kubectl set image deployment/frontend server=docker.io/dilipnigam007/frontend:v\${env.BUILD_NUMBER} -n default"
+                }
+            }
+        }
+    }
+}
