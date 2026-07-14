@@ -38,14 +38,14 @@ pipeline {
         stage('Build Image') {
             steps {
                 container('kaniko') {
-                    sh "/kaniko/executor --context \${WORKSPACE}/src/shippingservice --dockerfile \${WORKSPACE}/src/shippingservice/Dockerfile --destination dilipnigam007/shippingservice:v\${env.BUILD_NUMBER}"
+                    sh "/kaniko/executor --context ${WORKSPACE}/src/shippingservice --dockerfile ${WORKSPACE}/src/shippingservice/Dockerfile --destination dilipnigam007/shippingservice:v${env.BUILD_NUMBER}"
                 }
             }
         }
         stage('Deploy') {
             steps {
                 container('kubectl') {
-                    sh "kubectl set image deployment/shippingservice server=docker.io/dilipnigam007/shippingservice:v\${env.BUILD_NUMBER} -n default"
+                    sh "kubectl set image deployment/shippingservice server=docker.io/dilipnigam007/shippingservice:v${env.BUILD_NUMBER} -n default"
                 }
             }
         }
