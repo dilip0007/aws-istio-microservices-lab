@@ -40,7 +40,7 @@ pipeline {
         stage('Build Image') {
             steps {
                 container('kaniko') {
-                    sh "/kaniko/executor --context ${WORKSPACE}/src/cartservice --dockerfile ${WORKSPACE}/src/cartservice/Dockerfile --destination dilipnigam007/cartservice:v${env.BUILD_NUMBER}"
+                    sh "/kaniko/executor --context ${WORKSPACE}/src/cartservice/src --dockerfile ${WORKSPACE}/src/cartservice/src/Dockerfile --destination dilipnigam007/cartservice:v${env.BUILD_NUMBER}"
                 }
             }
         }
