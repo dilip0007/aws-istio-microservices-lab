@@ -30,7 +30,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying Helm Chart to EKS Cluster!'
-                sh 'helm upgrade --install online-boutique ./microservices-demo/helm-chart -n default'
+                sh 'helm upgrade --install online-boutique ./helm-chart -n default'
             }
         }
     }
