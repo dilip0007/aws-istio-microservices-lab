@@ -1,46 +1,80 @@
-pipeline {
-    agent any
-    
-    environment {
-        // Adding our local bin directory to the PATH so we can execute helm
-        PATH = "$WORKSPACE/bin:$PATH"
-    }
+def services = ['adservice', 'cartservice', 'checkoutservice', 'currencyservice', 'emailservice', 'frontend', 'loadgenerator', 'paymentservice', 'productcatalogservice', 'recommendationservice', 'shippingservice']
 
-    stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out code from GitHub...'
-                git url: 'https://github.com/dilip0007/aws-istio-microservices-lab.git', branch: 'main'
-            }
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: kaniko
+                image: gcr.io/kaniko-project/executor:debug
+                command:
+                - sleep
+                args:
+                - 9999999
+                volumeMounts:
+                - name: docker-config
+                  mountPath: /kaniko/.docker/
+              - name: helm
+                image: alpine/helm:3.12.0
+                command:
+                - sleep
+                args:
+                - 9999999
+              volumes:
+              - name: docker-config
+                secret:
+                  secretName: docker-credentials
+                  items:
+                    - key: config.json
+                      path: config.json
+            '''
         }
-        
-        stage('Install Dependencies') {
+    }
+    
+    stages {
+        stage('Build and Push Images (Parallel)') {
             steps {
-                echo 'Installing Helm...'
-                sh '''
-                    mkdir -p $WORKSPACE/bin
-                    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-                    chmod 700 get_helm.sh
-                    HELM_INSTALL_DIR=$WORKSPACE/bin ./get_helm.sh --no-sudo
-                    helm version
-                '''
+                script {
+                    def parallelStages = [:]
+                    
+                    for (int i = 0; i < services.size(); i++) {
+                        def svc = services[i]
+                        parallelStages[svc] = {
+                            stage("Build ${svc}") {
+                                container('kaniko') {
+                                    // Use Kaniko to build the image inside the pod without a Docker daemon!
+                                    sh "/kaniko/executor --context ${WORKSPACE}/src/${svc} --dockerfile ${WORKSPACE}/src/${svc}/Dockerfile --destination dilipnigam007/${svc}:v${env.BUILD_NUMBER}"
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Execute all 11 builds concurrently!
+                    parallel parallelStages
+                }
             }
         }
         
         stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deploying Helm Chart to EKS Cluster!'
-                sh 'helm upgrade --install online-boutique ./helm-chart -n default'
+                container('helm') {
+                    echo "Deploying version v${env.BUILD_NUMBER} to Kubernetes..."
+                    // Tell Helm to pull the images from the user's personal Docker Hub using the new tags
+                    sh "helm upgrade --install online-boutique ./helm-chart -n default --set images.repository=docker.io/dilipnigam007 --set images.tag=v${env.BUILD_NUMBER}"
+                }
             }
         }
     }
     
     post {
         success {
-            echo 'Deployment successful! 🎉'
+            echo 'Massive Monorepo Deployment successful! 🎉'
         }
         failure {
-            echo 'Pipeline failed! Alerting the team.'
+            echo 'Pipeline failed! Check the Kaniko build logs.'
         }
     }
 }
