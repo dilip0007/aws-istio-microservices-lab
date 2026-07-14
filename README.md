@@ -283,3 +283,31 @@ kubectl port-forward svc/kiali -n istio-system 20001:20001
 👉 **Open in browser:** [http://localhost:20001](http://localhost:20001)
 
 *(Note: Once inside Kiali, make sure to select the `default` namespace from the dropdown, change the graph type to "App graph" or "Service graph", and enable "Traffic Animation" in the Display menu!)*
+
+---
+
+## 9. Jenkins CI/CD Setup
+
+To fully automate the deployment of this microservices architecture, a **Jenkins** server has been installed directly into the Kubernetes cluster in the `jenkins` namespace. 
+
+A sample CI/CD pipeline has been committed to the repository in the `Jenkinsfile` at the root directory.
+
+### 📜 How to read the Jenkinsfile
+If you open the **[Jenkinsfile](file:///Users/dilipnigam/Documents/auto-mode-eks-cluster/microservices-demo/Jenkinsfile)** in this repository, you will see it is written in Groovy syntax. It defines stages for a standard pipeline:
+1. **Checkout:** Pulls the code from GitHub.
+2. **Build & Test:** Runs unit tests on the code.
+3. **Deploy to Kubernetes:** Executes a `helm upgrade` command to deploy the new code directly into the cluster!
+
+### 🔓 Accessing the Jenkins Dashboard
+Because Jenkins is running securely inside the cluster, you must open a port-forward tunnel to access the UI. 
+
+Since Port 8080 on your Mac is likely being used by the main website, we map Port 8081 to Jenkins instead! Run this command in a new terminal window:
+```bash
+kubectl --namespace jenkins port-forward svc/jenkins 8081:8080
+```
+
+👉 **Open in browser:** [http://localhost:8081](http://localhost:8081)
+
+### 🔑 Login Credentials
+- **Username:** `admin`
+- **Password:** `rlynQ5bBWAQhRlIx3BTXdW`
