@@ -40,7 +40,7 @@ pipeline {
         stage('Build Image') {
             steps {
                 container('kaniko') {
-                    sh "/kaniko/executor --context ${WORKSPACE}/src/emailservice --dockerfile ${WORKSPACE}/src/emailservice/Dockerfile --destination dilipnigam007/emailservice:v${env.BUILD_NUMBER}"
+                    sh "/kaniko/executor --build-arg BUILDPLATFORM=linux/arm64 --build-arg TARGETARCH=arm64 --context ${WORKSPACE}/src/emailservice --dockerfile ${WORKSPACE}/src/emailservice/Dockerfile --destination dilipnigam007/emailservice:v${env.BUILD_NUMBER}"
                 }
             }
         }
