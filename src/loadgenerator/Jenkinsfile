@@ -20,6 +20,8 @@ pipeline {
                   mountPath: /kaniko/.docker/
               - name: kubectl
                 image: bitnami/kubectl:latest
+                securityContext:
+                  runAsUser: 0
                 command:
                 - sleep
                 args:
